@@ -2,11 +2,8 @@ package torr
 
 import (
 	"errors"
-	"sort"
 	"sync"
 	"time"
-
-	utils2 "server/utils"
 
 	"github.com/anacrolix/torrent"
 	"github.com/anacrolix/torrent/metainfo"
@@ -268,7 +265,7 @@ func (t *Torrent) drop() {
 }
 
 func (t *Torrent) Close() bool {
-	if t.cache != nil && t.cache.GetUseReaders() > 0 {
+	if t.cache != nil && t.cache.Readers() > 0 {
 		return false
 	}
 	t.Stat = state.TorrentClosed
@@ -332,12 +329,9 @@ func (t *Torrent) Status() *state.TorrentStatus {
 			st.TorrentSize = t.Torrent.Length()
 
 			files := t.Files()
-			sort.Slice(files, func(i, j int) bool {
-				return utils2.CompareStrings(files[i].Path(), files[j].Path())
-			})
 			for i, f := range files {
 				st.FileStats = append(st.FileStats, &state.TorrentFileStat{
-					Id:     i + 1, // in web id 0 is undefined
+					Id:     i,
 					Path:   f.Path(),
 					Length: f.Length(),
 				})

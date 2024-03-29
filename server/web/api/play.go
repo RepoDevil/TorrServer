@@ -19,16 +19,17 @@ import (
 //
 //	@Tags			API
 //
-//	@Param			hash		path	string	true	"Torrent hash"
-//	@Param			id			path	string	true	"File index in torrent"
+//	@Param			hash		query	string	true	"Torrent hash"
+//	@Param			id			query	string	true	"File index in torrent"
+//	@Param			not_auth	query	bool	false	"Not authenticated"
 //
 //	@Produce		application/octet-stream
 //	@Success		200	"Torrent data"
-//	@Router			/play/{hash}/{id} [get]
+//	@Router			/play [get]
 func play(c *gin.Context) {
 	hash := c.Param("hash")
 	indexStr := c.Param("id")
-	notAuth := c.GetBool("auth_required") && c.GetString(gin.AuthUserKey) == ""
+	notAuth := c.GetBool("not_auth")
 
 	if hash == "" || indexStr == "" {
 		c.AbortWithError(http.StatusNotFound, errors.New("link should not be empty"))

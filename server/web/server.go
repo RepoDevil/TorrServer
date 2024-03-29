@@ -2,6 +2,7 @@ package web
 
 import (
 	"net"
+	"net/http"
 	"os"
 	"sort"
 
@@ -11,7 +12,6 @@ import (
 	"github.com/gin-contrib/location"
 	"github.com/gin-gonic/gin"
 
-	"server/dlna"
 	"server/settings"
 	"server/web/msx"
 
@@ -21,7 +21,6 @@ import (
 	"server/web/api"
 	"server/web/auth"
 	"server/web/blocker"
-	"server/web/pages"
 	"server/web/sslcerts"
 
 	swaggerFiles "github.com/swaggo/files"     // swagger embed files
@@ -29,8 +28,9 @@ import (
 )
 
 var (
-	BTS      = torr.NewBTS()
-	waitChan = make(chan error)
+	BTS        = torr.NewBTS()
+	waitChan   = make(chan error)
+	httpServer *http.Server
 )
 
 //	@title			Swagger Torrserver API
@@ -71,16 +71,18 @@ func Start() {
 
 	route := gin.New()
 	route.Use(log.WebLogger(), blocker.Blocker(), gin.Recovery(), cors.New(corsCfg), location.Default())
-	auth.SetupAuth(route)
 
 	route.GET("/echo", echo)
 
-	api.SetupRoute(route)
-	msx.SetupRoute(route)
-	pages.SetupRoute(route)
-
-	if settings.BTsets.EnableDLNA {
-		dlna.Start()
+	routeAuth := auth.SetupAuth(route)
+	if routeAuth != nil {
+		api.SetupRoute(routeAuth)
+		msx.SetupRoute(routeAuth)
+		//pages.SetupRoute(routeAuth)
+	} else {
+		api.SetupRoute(&route.RouterGroup)
+		msx.SetupRoute(&route.RouterGroup)
+		//pages.SetupRoute(&route.RouterGroup)
 	}
 
 	route.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
@@ -108,9 +110,15 @@ func Start() {
 		}()
 	}
 
+	httpServer = &http.Server{
+		Addr:    ":" + settings.Port,
+		Handler: route,
+	}
+
 	go func() {
 		log.TLogln("Start http server at port", settings.Port)
-		waitChan <- route.Run(":" + settings.Port)
+		httpServer.ListenAndServe()
+		//waitChan <- route.Run(" :" + settings.Port)
 	}()
 }
 
@@ -119,9 +127,11 @@ func Wait() error {
 }
 
 func Stop() {
-	dlna.Stop()
+	if httpServer != nil {
+		httpServer.Close()
+	}
 	BTS.Disconnect()
-	waitChan <- nil
+	//waitChan <- nil
 }
 
 // echo godoc

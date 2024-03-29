@@ -140,7 +140,6 @@ func SetTorrent(hashHex, title, poster, data string) *Torrent {
 
 func RemTorrent(hashHex string) {
 	if sets.ReadOnly {
-		log.TLogln("API RemTorrent: Read-only DB mode!", hashHex)
 		return
 	}
 	hash := metainfo.NewHashFromHex(hashHex)
@@ -193,7 +192,6 @@ func DropTorrent(hashHex string) {
 
 func SetSettings(set *sets.BTSets) {
 	if sets.ReadOnly {
-		log.TLogln("API SetSettings: Read-only DB mode!")
 		return
 	}
 	sets.SetBTSets(set)
@@ -210,7 +208,6 @@ func SetSettings(set *sets.BTSets) {
 
 func SetDefSettings() {
 	if sets.ReadOnly {
-		log.TLogln("API SetDefSettings: Read-only DB mode!")
 		return
 	}
 	sets.SetDefaultConfig()
@@ -236,7 +233,6 @@ func Shutdown() {
 	bts.Disconnect()
 	sets.CloseDB()
 	log.TLogln("Received shutdown. Quit")
-	os.Exit(0)
 }
 
 func WriteStatus(w io.Writer) {

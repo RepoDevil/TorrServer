@@ -5,13 +5,16 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"server/log"
 	"server/settings"
+	"server/torr/utils"
 	"server/web"
 )
 
-func Start(port, sslport, sslCert, sslKey string, sslEnabled, roSets, searchWA bool) {
+func Start(pathdb, port, sslport, sslCert, sslKey string, sslEnabled, roSets, searchWA bool) {
+	settings.Path = pathdb
 	settings.InitSets(roSets, searchWA)
 	if roSets {
 		log.TLogln("Enabled Read-only DB mode!")
@@ -45,7 +48,7 @@ func Start(port, sslport, sslCert, sslKey string, sslEnabled, roSets, searchWA b
 			l.Close()
 		}
 		if err != nil {
-			log.TLogln("Port", sslport, "already in use! Please set different ssl port for HTTPS. Abort")
+			log.TLogln("Port", sslport, "already in use! Please set different port for HTTPS. Abort")
 			os.Exit(1)
 		}
 	}
@@ -59,7 +62,7 @@ func Start(port, sslport, sslCert, sslKey string, sslEnabled, roSets, searchWA b
 		l.Close()
 	}
 	if err != nil {
-		log.TLogln("Port", port, "already in use! Please set different port for HTTP. Abort")
+		log.TLogln("Port", port, "already in use! Please set different sslport for HTTP. Abort")
 		os.Exit(1)
 	}
 	// remove old disk caches
@@ -129,4 +132,9 @@ func WaitServer() string {
 func Stop() {
 	web.Stop()
 	settings.CloseDB()
+}
+
+func AddTrackers(trackers string) {
+	tracks := strings.Split(trackers, ",\n")
+	utils.SetDefTrackers(tracks)
 }

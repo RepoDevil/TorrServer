@@ -15,7 +15,7 @@ type TDB struct {
 	db   *bolt.DB
 }
 
-func NewTDB() TorrServerDB {
+func NewTDB() *TDB {
 	db, err := bolt.Open(filepath.Join(Path, "config.db"), 0o666, &bolt.Options{Timeout: 5 * time.Second})
 	if err != nil {
 		log.TLogln(err)
@@ -68,6 +68,10 @@ func (v *TDB) Get(xpath, name string) []byte {
 }
 
 func (v *TDB) Set(xpath, name string, value []byte) {
+	if ReadOnly {
+		return
+	}
+
 	spath := strings.Split(xpath, "/")
 	if len(spath) == 0 {
 		return
@@ -135,6 +139,10 @@ func (v *TDB) List(xpath string) []string {
 }
 
 func (v *TDB) Rem(xpath, name string) {
+	if ReadOnly {
+		return
+	}
+
 	spath := strings.Split(xpath, "/")
 	if len(spath) == 0 {
 		return
